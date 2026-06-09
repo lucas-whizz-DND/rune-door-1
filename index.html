@@ -2,15 +2,17 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Rune Door</title>
+<title>The Rune Door</title>
 
 <style>
 
 body{
+    position:relative;
     background:#111;
     color:white;
     font-family:Arial,sans-serif;
     text-align:center;
+    overflow:hidden;
 }
 
 h1{
@@ -31,11 +33,13 @@ h1{
     background-position:center;
 
     border:4px solid #444;
+
+    transition:opacity 4s ease;
 }
 
 .rune{
-    width:80px;
-    height:80px;
+    width:70px;
+    height:70px;
 
     border-radius:50%;
 
@@ -56,17 +60,61 @@ h1{
 
 .correct{
     background:#00ff00;
-    box-shadow:0 0 20px lime;
+    box-shadow:
+        0 0 10px lime,
+        0 0 20px lime,
+        0 0 30px lime;
 }
 
 .wrong{
     background:#ff0000;
-    box-shadow:0 0 20px red;
+    box-shadow:
+        0 0 10px red,
+        0 0 20px red,
+        0 0 30px red;
 }
 
+/* MESSAGE */
 #message{
-    margin-top:20px;
-    font-size:24px;
+    position:fixed;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    font-size:52px;
+    font-weight:bold;
+
+    color:#fff;
+
+    text-align:center;
+
+    text-shadow:
+        0 0 10px #fff,
+        0 0 20px #fff,
+        0 0 40px #fff;
+
+    opacity:0;
+
+    transition:opacity 2s ease;
+
+    pointer-events:none;
+
+    width:80%;
+}
+
+/* SEAL STYLE */
+#message.sealed{
+    color:#ff3b3b;
+    text-shadow:
+        0 0 10px #ff3b3b,
+        0 0 20px #ff3b3b,
+        0 0 40px #ff3b3b;
+}
+
+#message.show{
+    opacity:1;
 }
 
 </style>
@@ -78,52 +126,48 @@ h1{
 
 <div id="door">
 
-<button class="rune" id="r1" style="top:150px;left:120px;">ᚠ</button>
-
-<button class="rune" id="r2" style="top:150px;right:120px;">ᚢ</button>
-
-<button class="rune" id="r3" style="bottom:250px;left:120px;">ᚦ</button>
-
-<button class="rune" id="r4" style="bottom:250px;right:120px;">ᚱ</button>
+    <button class="rune" id="r1" style="top:330px;left:255px;">ᚠ</button>
+    <button class="rune" id="r2" style="top:330px;left:370px;">ᚢ</button>
+    <button class="rune" id="r3" style="top:440px;left:255px;">ᚦ</button>
+    <button class="rune" id="r4" style="top:440px;left:370px;">ᚱ</button>
 
 </div>
 
-<div id="message"></div>
+<div id="message">
+    The mechanism inside the door begins to spin.
+</div>
 
 <script>
 
-// CHANGE THIS TO YOUR SECRET SEQUENCE
+// correct sequence
 const solution = ["r3","r1","r4","r2"];
 
 let progress = 0;
+let failures = 0;
+let locked = false;
+
+const door = document.getElementById("door");
+const message = document.getElementById("message");
 
 document.querySelectorAll(".rune").forEach(button => {
 
     button.addEventListener("click", () => {
+
+        if(locked) return;
 
         const expected = solution[progress];
 
         if(button.id === expected){
 
             button.classList.add("correct");
-
             progress++;
 
             if(progress === solution.length){
-
-                document.getElementById("message").innerHTML =
-                "The ancient mechanism groans and the door opens.";
-
-                setTimeout(() => {
-                    document.getElementById("door").style.opacity = "0.2";
-                },1000);
-
+                openDoor();
             }
 
         } else {
-
             flashRed();
-
         }
 
     });
@@ -131,6 +175,11 @@ document.querySelectorAll(".rune").forEach(button => {
 });
 
 function flashRed(){
+
+    if(locked) return;
+
+    failures++;
+    progress = 0;
 
     const runes = document.querySelectorAll(".rune");
 
@@ -143,10 +192,46 @@ function flashRed(){
             r.classList.remove("correct");
         });
 
-        progress = 0;
+    }, 1000);
 
-    },1000);
+    if(failures >= 5){
+        lockDoor();
+    }
+}
 
+function lockDoor(){
+
+    locked = true;
+
+    document.querySelectorAll(".rune").forEach(r => {
+        r.disabled = true;
+    });
+
+    // fade out door first
+    setTimeout(() => {
+        door.style.opacity = "0";
+    }, 500);
+
+    // then show sealed message
+    setTimeout(() => {
+        message.textContent = "The runes flare violently... and the door seals shut.";
+        message.classList.add("show", "sealed");
+    }, 1500);
+}
+
+function openDoor(){
+
+    document.querySelectorAll(".rune").forEach(r => {
+        r.disabled = true;
+    });
+
+    setTimeout(() => {
+        door.style.opacity = "0";
+    }, 500);
+
+    setTimeout(() => {
+        message.classList.add("show");
+    }, 1500);
 }
 
 </script>
